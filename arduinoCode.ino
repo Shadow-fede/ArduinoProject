@@ -11,9 +11,9 @@ double setpoint = 15.0;          // Centro della barra (Target)
 const double deadzone = 0.5;     // Tolleranza di 0.5 cm per evitare vibrazioni
 
 // --- Parametri PID Ottimizzati per SG90 (Più morbidi) ---
-double Kp = 0.8;
-double Ki = 0.0;
-double Kd = 0.4;
+double Kp = 1.2;
+double Ki = 0.3;
+double Kd = 0.8;
 
 // --- Variabili di Stato ---
 Servo myServo;
