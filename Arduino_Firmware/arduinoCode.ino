@@ -1,8 +1,7 @@
 #include <Servo.h>
+#include <UltrasonicHelper.h>
 
 // --- Configurazione Pin ---
-const int trigPin = 9;
-const int echoPin = 10;
 const int servoPin = 11;
 
 // --- Parametri di Controllo e Geometria ---
@@ -11,41 +10,26 @@ double setpoint = 15.0;          // Centro della barra (Target)
 const double deadzone = 0.5;     // Tolleranza di 0.5 cm per evitare vibrazioni
 
 // --- Parametri PID Ottimizzati per SG90 (Più morbidi) ---
-double Kp = 1.2;
-double Ki = 0.3;
-double Kd = 0.8;
+double Kp = 0.0;
+double Ki = 0.0;
+double Kd = 0.0;
 
 // --- Variabili di Stato ---
 Servo myServo;
+UltrasonicHelper sensore(9,10,5);
 
 double input, output, error, lastError;
 double integral, derivative;
 unsigned long lastTime;
 float lastValidDistance = 15.0;
 
-// --- Funzione Lettura e Filtro Ultrasuoni ---
-float readDistance() {
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-
-  long duration = pulseIn(echoPin, HIGH, 30000); // Timeout di 30ms
-  if (duration == 0) return -1;                  // Nessun eco ricevuto
-
-  float distance = duration * 0.034 / 2;
-  return distance;
-}
 
 void setup() {
   Serial.begin(115200); // Velocità alta per l'R4
 
+  sensore.begin();
   myServo.attach(servoPin);
   myServo.write(90); // Mette la barra in piano all'avvio
-
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
 
   lastTime = millis();
 }
@@ -54,8 +38,8 @@ void loop() {
   unsigned long now = millis();
   double timeChange = (double)(now - lastTime);
 
-  if (timeChange >= 50) { // Campionamento ogni 50 millisecondi
-    float rawDistance = readDistance();
+  if (timeChange >= 100) { // Campionamento ogni 50 millisecondi
+    float rawDistance = sensore.medianDistance();
 
     // GESTIONE ECCEZIONE: Pallina persa o caduta
     if (rawDistance <= 2 || rawDistance > maxBarLength || rawDistance == -1) {
@@ -87,7 +71,7 @@ void loop() {
 
         // Converte l'output in gradi per il servo (limite max di inclinazione: 20 gradi)
         int servoAngle = 90 + output;
-        servoAngle = constrain(servoAngle, 70, 110);
+        servoAngle = constrain(servoAngle, 60, 120);
 
         myServo.write(servoAngle);
       }
